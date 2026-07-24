@@ -15,7 +15,7 @@ class WidgetCard extends StatelessWidget {
     required this.brightness,
     this.animate = true,
     this.gridKey,
-    this.columns = 18,
+    this.columns = 12,
     this.rows = 7,
   });
 
@@ -45,7 +45,7 @@ class WidgetCard extends StatelessWidget {
           ),
         ],
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 22),
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
@@ -58,24 +58,27 @@ class WidgetCard extends StatelessWidget {
                 label: 'day streak',
                 valueColor: palette.primaryText,
                 labelColor: palette.secondaryText,
+                valueSize: 24,
               ),
-              const SizedBox(height: 18),
+              const SizedBox(height: 12),
               StatTile(
                 value: '${stats.prsMerged}',
                 label: 'PRs merged',
                 valueColor: palette.accentGreen,
                 labelColor: palette.secondaryText,
+                valueSize: 24,
               ),
             ],
           ),
-          const SizedBox(width: 26),
+          const SizedBox(width: 16),
           Expanded(
+            flex: 2,
             child: ContributionGrid(
               key: gridKey,
               levels: levels,
               palette: palette,
               columns: columns,
-              gap: 4,
+              gap: 5,
               animate: animate,
             ),
           ),
