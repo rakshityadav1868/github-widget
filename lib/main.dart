@@ -5,13 +5,18 @@ import 'core/colors.dart';
 import 'core/theme.dart';
 import 'data/models/github_stats.dart';
 import 'data/sample_stats.dart';
+import 'data/services/background_refresh.dart';
 import 'data/services/github_api.dart';
 import 'data/services/token_store.dart';
 import 'data/services/widget_updater.dart';
 import 'features/onboarding/sign_in_screen.dart';
 import 'features/preview/preview_screen.dart';
 
-void main() => runApp(const GitHubWidgetApp());
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await BackgroundRefresh.initialize();
+  runApp(const GitHubWidgetApp());
+}
 
 class GitHubWidgetApp extends StatelessWidget {
   const GitHubWidgetApp({super.key});
@@ -75,6 +80,7 @@ class _RootGateState extends State<RootGate> {
 
   Future<void> _signOut() async {
     await _store.clear();
+    await BackgroundRefresh.cancel();
     if (mounted) setState(() => _login = null);
   }
 
@@ -83,7 +89,7 @@ class _RootGateState extends State<RootGate> {
       MaterialPageRoute(
         builder: (_) => PreviewScreen(
           stats: sampleGitHubStats(),
-          subtitle: 'Sample data — sign in to see your own stats.',
+          subtitle: 'Sample data - sign in to see your own stats.',
         ),
       ),
     );
@@ -128,6 +134,7 @@ class _SignedInHomeState extends State<_SignedInHome> {
     final api = GitHubApi(token: token);
     try {
       final stats = await api.fetchStats(widget.login);
+      await BackgroundRefresh.schedule();
       return stats;
     } finally {
       api.close();
@@ -148,7 +155,7 @@ class _SignedInHomeState extends State<_SignedInHome> {
         if (snapshot.hasError) {
           return PreviewScreen(
             stats: sampleGitHubStats(),
-            subtitle: "Couldn't load your live stats yet — showing sample.",
+            subtitle: "Couldn't load your live stats yet - showing sample.",
             onSignOut: widget.onSignOut,
           );
         }

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// A big number above a small muted label — the stat column building block
+/// A big number above a small muted label - the stat column building block
 /// (e.g. "23 / day streak", "148 / PRs merged").
 class StatTile extends StatelessWidget {
   const StatTile({

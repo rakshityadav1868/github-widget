@@ -1,9 +1,9 @@
 /**
- * GitHub Widget — OAuth token-exchange backend (Cloudflare Worker).
+ * GitHub Widget - OAuth token-exchange backend (Cloudflare Worker).
  *
  * The mobile app sends the authorization `code` it got from GitHub; this
  * worker exchanges it for an access token using the client secret, which
- * lives ONLY here (as a Worker secret) — never in the app or the repo.
+ * lives ONLY here (as a Worker secret) - never in the app or the repo.
  *
  * POST /  { "code": "..." }  ->  { "access_token": "...", "scope": "...", ... }
  */

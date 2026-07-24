@@ -13,7 +13,7 @@ class ContributionDay {
   /// Number of contributions on this day.
   final int count;
 
-  /// Intensity level 0–4, matching GitHub's five green shades
+  /// Intensity level 0-4, matching GitHub's five green shades
   /// (0 = none, 4 = highest activity).
   final int level;
 

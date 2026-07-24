@@ -33,7 +33,7 @@ GitHubStats sampleGitHubStats() {
       final daysAgo = today.difference(date).inDays;
       final int count;
       if (daysAgo < 23) {
-        count = 1 + rng.nextInt(12); // active — builds the 23-day streak
+        count = 1 + rng.nextInt(12); // active - builds the 23-day streak
       } else if (daysAgo == 23) {
         count = 0; // the break that ends the streak at 23
       } else {
