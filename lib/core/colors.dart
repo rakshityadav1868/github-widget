@@ -99,13 +99,12 @@ class WidgetPalette {
 
   /// Generates five grid intensity colors from a seed [color].
   /// Returns colors for activity levels 1–4 (plus one extra for safety).
-  /// The grid uses shades of the seed color so it matches the wallpaper theme.
+  /// The grid uses shades of the seed color's hue, at increasing
+  /// lightness/darkness per level, so it matches the wallpaper theme while
+  /// keeping the same darkest-to-brightest progression as the static
+  /// palettes.
   static List<Color> _deriveGridLevels(Color seed, bool isDark) {
-    final hsv = HSVColor.fromColor(seed);
-    // Use the theme's hue for the grid so it matches the wallpaper colors,
-    // but keep it recognizably GitHub-like by biasing toward green when the
-    // theme color is far from green.
-    final hue = hsv.hue;
+    final hue = HSVColor.fromColor(seed).hue;
     return [
       // Level 1 — lightest
       HSLColor.fromAHSL(1, hue, 0.45, isDark ? 0.28 : 0.72).toColor(),

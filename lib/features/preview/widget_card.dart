@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../../core/colors.dart';
-import '../../core/theme.dart';
 import '../../data/models/github_stats.dart';
 import '../../widgets/contribution_grid.dart';
 import '../../widgets/stat_tile.dart';
@@ -10,32 +9,39 @@ import '../../widgets/stat_tile.dart';
 /// and PRs merged) and the real contribution grid on the right, colored per
 /// [brightness] via [WidgetPalette], matching the reference design.
 ///
-/// When the app is running under a dynamic-color theme (Android 12+ / Samsung
-/// wallpaper theming), the palette is derived from the wallpaper so the widget
-/// blends with the rest of the system UI.
+/// Pass [dynamicScheme] to color the card from the wallpaper-derived system
+/// theme (Android 12+ / Samsung theming) instead of the static green
+/// palette. It's an explicit, caller-controlled override rather than
+/// something this widget infers on its own - the caller decides whether the
+/// user wants wallpaper matching or a manually forced light/dark look.
 class WidgetCard extends StatelessWidget {
   const WidgetCard({
     super.key,
     required this.stats,
     required this.brightness,
+    this.dynamicScheme,
     this.animate = true,
     this.gridKey,
   });
 
   final GitHubStats stats;
   final Brightness brightness;
+  final ColorScheme? dynamicScheme;
   final bool animate;
   final Key? gridKey;
 
   @override
   Widget build(BuildContext context) {
-    final palette = _resolvePalette(context);
+    final palette = _resolvePalette();
     return Container(
       decoration: BoxDecoration(
         color: palette.cardBackground,
         borderRadius: BorderRadius.circular(28),
         border: brightness == Brightness.light
-            ? Border.all(color: const Color(0xFFECECEC))
+            ? Border.all(
+                color: dynamicScheme?.outlineVariant ??
+                    const Color(0xFFECECEC),
+              )
             : null,
         boxShadow: [
           BoxShadow(
@@ -86,11 +92,13 @@ class WidgetCard extends StatelessWidget {
     );
   }
 
-  /// Picks up dynamic colors from the theme provider when available, falling
-  /// back to the static dark/light palette otherwise.
-  WidgetPalette _resolvePalette(BuildContext context) {
-    final dynamic = ThemeProvider.maybeOf(context);
-    if (dynamic != null) return WidgetPalette.fromColorScheme(dynamic);
+  /// Uses [dynamicScheme] when the caller explicitly opted into wallpaper
+  /// matching; otherwise the static palette for [brightness] - so a manually
+  /// picked Light/Dark mode is never silently overridden.
+  WidgetPalette _resolvePalette() {
+    if (dynamicScheme != null) {
+      return WidgetPalette.fromColorScheme(dynamicScheme!);
+    }
     return WidgetPalette.of(brightness);
   }
 }

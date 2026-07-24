@@ -3,7 +3,6 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:home_widget/home_widget.dart';
 
-import '../../core/theme.dart';
 import '../../features/preview/widget_card.dart';
 import '../models/github_stats.dart';
 
@@ -64,20 +63,12 @@ class _Renderable extends StatelessWidget {
       data: const MediaQueryData(),
       child: Directionality(
         textDirection: TextDirection.ltr,
-        child: dynamicScheme != null
-            ? ThemeProvider(
-                scheme: dynamicScheme!,
-                child: WidgetCard(
-                  stats: stats,
-                  brightness: brightness,
-                  animate: false,
-                ),
-              )
-            : WidgetCard(
-                stats: stats,
-                brightness: brightness,
-                animate: false,
-              ),
+        child: WidgetCard(
+          stats: stats,
+          brightness: brightness,
+          dynamicScheme: dynamicScheme,
+          animate: false,
+        ),
       ),
     );
   }
