@@ -9,10 +9,13 @@ import '../../data/services/token_store.dart';
 
 /// Sign in with GitHub using the OAuth device flow.
 class SignInScreen extends StatefulWidget {
-  const SignInScreen({super.key, required this.onSignedIn});
+  const SignInScreen({super.key, required this.onSignedIn, this.onPreview});
 
   /// Called with the signed-in username once a token is stored.
   final ValueChanged<String> onSignedIn;
+
+  /// Optional: preview the widget with sample data without signing in.
+  final VoidCallback? onPreview;
 
   @override
   State<SignInScreen> createState() => _SignInScreenState();
@@ -97,15 +100,20 @@ class _SignInScreenState extends State<SignInScreen> {
         return const _Loading();
       case _Stage.idle:
       case _Stage.error:
-        return _Intro(error: _error, onPressed: _start);
+        return _Intro(
+          error: _error,
+          onPressed: _start,
+          onPreview: widget.onPreview,
+        );
     }
   }
 }
 
 class _Intro extends StatelessWidget {
-  const _Intro({this.error, required this.onPressed});
+  const _Intro({this.error, required this.onPressed, this.onPreview});
   final String? error;
   final VoidCallback onPressed;
+  final VoidCallback? onPreview;
 
   @override
   Widget build(BuildContext context) {
@@ -128,6 +136,13 @@ class _Intro extends StatelessWidget {
           icon: const Icon(Icons.code),
           label: const Text('Sign in with GitHub'),
         ),
+        if (onPreview != null) ...[
+          const SizedBox(height: 4),
+          TextButton(
+            onPressed: onPreview,
+            child: const Text('Preview with sample data'),
+          ),
+        ],
         if (error != null) ...[
           const SizedBox(height: 20),
           Text(
