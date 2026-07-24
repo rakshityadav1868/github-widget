@@ -1,10 +1,11 @@
 /// A single day in the GitHub contribution calendar.
 class ContributionDay {
-  const ContributionDay({
+  ContributionDay({
     required this.date,
     required this.count,
     required this.level,
-  });
+    int? weekday,
+  }) : weekday = weekday ?? (date.weekday % 7);
 
   /// The calendar date (local midnight).
   final DateTime date;
@@ -16,12 +17,17 @@ class ContributionDay {
   /// (0 = none, 4 = highest activity).
   final int level;
 
+  /// Day of week, GitHub-style: 0 = Sunday … 6 = Saturday.
+  final int weekday;
+
   /// Parses one `contributionDays` entry from the GitHub GraphQL API.
   factory ContributionDay.fromJson(Map<String, dynamic> json) {
+    final date = DateTime.parse(json['date'] as String);
     return ContributionDay(
-      date: DateTime.parse(json['date'] as String),
+      date: date,
       count: (json['contributionCount'] as num).toInt(),
       level: _levelFromString(json['contributionLevel'] as String?),
+      weekday: (json['weekday'] as num?)?.toInt() ?? (date.weekday % 7),
     );
   }
 

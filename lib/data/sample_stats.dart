@@ -11,26 +11,38 @@ int _levelForCount(int count) {
   return 4;
 }
 
-/// Deterministic sample stats for previewing the widget before sign-in.
-/// Numbers mirror the reference design (23-day streak, 148 PRs merged).
+/// Deterministic sample stats for previewing the widget before sign-in, built
+/// as real weeks (Sun → Sat) so the grid looks like GitHub's. Numbers mirror
+/// the reference design (23-day streak, 148 PRs merged).
 GitHubStats sampleGitHubStats() {
   final rng = Random(7);
   final now = DateTime.now();
   final today = DateTime(now.year, now.month, now.day);
-  final days = <ContributionDay>[];
-  const total = 140;
+  final currentSunday = today.subtract(Duration(days: today.weekday % 7));
+  final startSunday = currentSunday.subtract(const Duration(days: 51 * 7));
 
-  for (var i = total - 1; i >= 0; i--) {
-    final date = today.subtract(Duration(days: i));
-    final int count;
-    if (i < 23) {
-      count = 1 + rng.nextInt(12); // active — builds the 23-day streak
-    } else if (i == 23) {
-      count = 0; // the break that ends the streak at 23
-    } else {
-      count = rng.nextInt(10) == 0 ? 0 : rng.nextInt(14);
+  final weeks = <List<ContributionDay>>[];
+  var total = 0;
+  for (var weekStart = startSunday;
+      !weekStart.isAfter(currentSunday);
+      weekStart = weekStart.add(const Duration(days: 7))) {
+    final days = <ContributionDay>[];
+    for (var d = 0; d < 7; d++) {
+      final date = weekStart.add(Duration(days: d));
+      if (date.isAfter(today)) break;
+      final daysAgo = today.difference(date).inDays;
+      final int count;
+      if (daysAgo < 23) {
+        count = 1 + rng.nextInt(12); // active — builds the 23-day streak
+      } else if (daysAgo == 23) {
+        count = 0; // the break that ends the streak at 23
+      } else {
+        count = rng.nextInt(10) == 0 ? 0 : rng.nextInt(14);
+      }
+      total += count;
+      days.add(ContributionDay(date: date, count: count, level: _levelForCount(count)));
     }
-    days.add(ContributionDay(date: date, count: count, level: _levelForCount(count)));
+    weeks.add(days);
   }
 
   return GitHubStats(
@@ -39,8 +51,8 @@ GitHubStats sampleGitHubStats() {
     avatarUrl: '',
     followers: 128,
     totalStars: 2300,
-    totalContributions: 1204,
+    totalContributions: total,
     prsMerged: 148,
-    contributions: days,
+    weeks: weeks,
   );
 }

@@ -97,6 +97,7 @@ query($login: String!, $prSearch: String!) {
         weeks {
           contributionDays {
             date
+            weekday
             contributionCount
             contributionLevel
           }
