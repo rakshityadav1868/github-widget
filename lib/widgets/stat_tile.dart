@@ -37,7 +37,7 @@ class StatTile extends StatelessWidget {
         Text(
           label,
           style: TextStyle(
-            fontSize: 13,
+            fontSize: 11,
             fontWeight: FontWeight.w400,
             color: labelColor,
           ),
