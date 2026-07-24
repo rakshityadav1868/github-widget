@@ -64,6 +64,7 @@ lib/
   widgets/               shared UI pieces (contribution_grid, stat_tile)
 android/                 native Android + home-screen widget (Glance)
 ios/                     native iOS + WidgetKit extension
+website/                 Next.js download page (Android APK, iOS coming soon)
 ```
 
 ## Milestones & PRs
