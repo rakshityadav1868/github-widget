@@ -17,6 +17,34 @@ flutter pub get
 flutter run   # with your Android phone connected over USB (USB debugging on)
 ```
 
+## Release signing (Android)
+
+Release APKs are signed with a dedicated release key, not the shared Flutter
+debug key — debug-signed APKs get flagged by Chrome/Play Protect as
+untrustworthy since every Flutter install shares the same debug certificate.
+
+To build a signed release locally:
+
+```bash
+keytool -genkeypair -v -keystore android/forge-release.jks \
+  -keyalg RSA -keysize 2048 -validity 10000 -alias forge
+```
+
+Then create `android/key.properties` (gitignored, never commit it):
+
+```
+storePassword=<your store password>
+keyPassword=<your key password>
+keyAlias=forge
+storeFile=forge-release.jks
+```
+
+Without `key.properties`, `flutter build apk --release` falls back to debug
+signing so the build still works — you just won't get a trusted release
+artifact. **Back up the keystore and `key.properties` somewhere safe** (e.g.
+a password manager); losing them means you can never sign an update with the
+same identity again.
+
 ## Contributing
 
 Contributions are welcome — see [CONTRIBUTING.md](CONTRIBUTING.md) for setup,
