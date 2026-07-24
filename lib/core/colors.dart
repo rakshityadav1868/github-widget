@@ -5,6 +5,11 @@ import 'package:flutter/material.dart';
 /// Two palettes — [dark] and [light] — each describing the widget card
 /// background, the contribution-grid empty cell, the five green intensity
 /// levels of the grid, and the text/accent colors.
+///
+/// On Android 12+ (and devices with Samsung's wallpaper-based theming), a
+/// [dynamic] palette is derived from the wallpaper / system theme so the
+/// widget blends with the rest of the UI. When dynamic colors aren't
+/// available, [of] falls back to [dark] / [light].
 class WidgetPalette {
   const WidgetPalette({
     required this.cardBackground,
@@ -62,6 +67,58 @@ class WidgetPalette {
     secondaryText: Color(0xFF8A9096),
     accentGreen: Color(0xFF2DA44E),
   );
+
+  /// Builds a palette from a Material [ColorScheme], so the widget picks up
+  /// the wallpaper-derived dynamic colors on Android 12+ / Samsung themes.
+  ///
+  /// The contribution grid keeps its GitHub-green levels (so the visual stays
+  /// recognizable), while the card, text, and accent colors follow the system
+  /// theme.
+  static WidgetPalette fromColorScheme(ColorScheme scheme) {
+    final isDark = scheme.brightness == Brightness.dark;
+    final primary = scheme.primary;
+    final surface = scheme.surface;
+    final onSurface = scheme.onSurface;
+    final onSurfaceVariant = scheme.onSurfaceVariant;
+
+    // Derive five green-ish levels from the primary color so the grid still
+    // looks like GitHub's contribution calendar but tinted to the theme.
+    final levels = _deriveGridLevels(primary, isDark);
+
+    return WidgetPalette(
+      cardBackground: surface,
+      emptyCell: isDark
+          ? onSurface.withValues(alpha: 0.08)
+          : onSurface.withValues(alpha: 0.06),
+      gridLevels: levels,
+      primaryText: onSurface,
+      secondaryText: onSurfaceVariant,
+      accentGreen: primary,
+    );
+  }
+
+  /// Generates five grid intensity colors from a seed [color].
+  /// Returns colors for activity levels 1–4 (plus one extra for safety).
+  /// The grid uses shades of the seed color so it matches the wallpaper theme.
+  static List<Color> _deriveGridLevels(Color seed, bool isDark) {
+    final hsv = HSVColor.fromColor(seed);
+    // Use the theme's hue for the grid so it matches the wallpaper colors,
+    // but keep it recognizably GitHub-like by biasing toward green when the
+    // theme color is far from green.
+    final hue = hsv.hue;
+    return [
+      // Level 1 — lightest
+      HSLColor.fromAHSL(1, hue, 0.45, isDark ? 0.28 : 0.72).toColor(),
+      // Level 2
+      HSLColor.fromAHSL(1, hue, 0.45, isDark ? 0.42 : 0.60).toColor(),
+      // Level 3
+      HSLColor.fromAHSL(1, hue, 0.50, isDark ? 0.56 : 0.50).toColor(),
+      // Level 4 — darkest
+      HSLColor.fromAHSL(1, hue, 0.50, isDark ? 0.70 : 0.40).toColor(),
+      // Level 5 (extra, for safety)
+      HSLColor.fromAHSL(1, hue, 0.50, isDark ? 0.85 : 0.30).toColor(),
+    ];
+  }
 
   static WidgetPalette of(Brightness brightness) =>
       brightness == Brightness.dark ? dark : light;

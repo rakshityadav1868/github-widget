@@ -1,5 +1,7 @@
+import 'package:dynamic_color/dynamic_color.dart';
 import 'package:flutter/material.dart';
 
+import 'core/colors.dart';
 import 'core/theme.dart';
 import 'data/models/github_stats.dart';
 import 'data/sample_stats.dart';
@@ -16,13 +18,27 @@ class GitHubWidgetApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Forge',
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.light,
-      darkTheme: AppTheme.dark,
-      themeMode: ThemeMode.system,
-      home: const RootGate(),
+    return DynamicColorBuilder(
+      builder: (ColorScheme? dynamic, ColorScheme? _) {
+        final scheme = dynamic ??
+            ColorScheme.fromSeed(
+              seedColor: WidgetPalette.dark.accentGreen,
+              brightness: ThemeMode.system == ThemeMode.dark
+                  ? Brightness.dark
+                  : Brightness.light,
+            );
+        return ThemeProvider(
+          scheme: scheme,
+          child: MaterialApp(
+            title: 'Forge',
+            debugShowCheckedModeBanner: false,
+            theme: AppTheme.light,
+            darkTheme: AppTheme.dark,
+            themeMode: ThemeMode.system,
+            home: const RootGate(),
+          ),
+        );
+      },
     );
   }
 }
@@ -104,6 +120,7 @@ class _SignedInHome extends StatefulWidget {
 class _SignedInHomeState extends State<_SignedInHome> {
   final _store = TokenStore();
   late final Future<GitHubStats> _future = _load();
+  bool _pushedToWidget = false;
 
   Future<GitHubStats> _load() async {
     final token = await _store.readToken();
@@ -111,7 +128,6 @@ class _SignedInHomeState extends State<_SignedInHome> {
     final api = GitHubApi(token: token);
     try {
       final stats = await api.fetchStats(widget.login);
-      await WidgetUpdater.update(stats);
       return stats;
     } finally {
       api.close();
@@ -120,6 +136,7 @@ class _SignedInHomeState extends State<_SignedInHome> {
 
   @override
   Widget build(BuildContext context) {
+    final dynamicScheme = ThemeProvider.maybeOf(context);
     return FutureBuilder<GitHubStats>(
       future: _future,
       builder: (context, snapshot) {
@@ -134,6 +151,17 @@ class _SignedInHomeState extends State<_SignedInHome> {
             subtitle: "Couldn't load your live stats yet — showing sample.",
             onSignOut: widget.onSignOut,
           );
+        }
+        // Push the freshly loaded stats (with dynamic colors) to the widget
+        // once, after the first successful load.
+        if (!_pushedToWidget) {
+          _pushedToWidget = true;
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            WidgetUpdater.update(
+              snapshot.data!,
+              dynamicScheme: dynamicScheme,
+            );
+          });
         }
         return PreviewScreen(
           stats: snapshot.data!,

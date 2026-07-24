@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/colors.dart';
+import '../../core/theme.dart';
 import '../../data/models/github_stats.dart';
 import '../../widgets/contribution_grid.dart';
 import '../../widgets/stat_tile.dart';
@@ -8,6 +9,10 @@ import '../../widgets/stat_tile.dart';
 /// The widget itself: a rounded card with a stat column on the left (day streak
 /// and PRs merged) and the real contribution grid on the right, colored per
 /// [brightness] via [WidgetPalette], matching the reference design.
+///
+/// When the app is running under a dynamic-color theme (Android 12+ / Samsung
+/// wallpaper theming), the palette is derived from the wallpaper so the widget
+/// blends with the rest of the system UI.
 class WidgetCard extends StatelessWidget {
   const WidgetCard({
     super.key,
@@ -24,7 +29,7 @@ class WidgetCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final palette = WidgetPalette.of(brightness);
+    final palette = _resolvePalette(context);
     return Container(
       decoration: BoxDecoration(
         color: palette.cardBackground,
@@ -79,5 +84,13 @@ class WidgetCard extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  /// Picks up dynamic colors from the theme provider when available, falling
+  /// back to the static dark/light palette otherwise.
+  WidgetPalette _resolvePalette(BuildContext context) {
+    final dynamic = ThemeProvider.maybeOf(context);
+    if (dynamic != null) return WidgetPalette.fromColorScheme(dynamic);
+    return WidgetPalette.of(brightness);
   }
 }

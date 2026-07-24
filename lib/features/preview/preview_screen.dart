@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../core/theme.dart';
 import '../../data/models/github_stats.dart';
 import '../../data/services/widget_updater.dart';
 import '../../widgets/contribution_grid.dart';
@@ -35,8 +36,13 @@ class _PreviewScreenState extends State<PreviewScreen> {
 
   Future<void> _addToHome() async {
     final messenger = ScaffoldMessenger.of(context);
+    final dynamicScheme = ThemeProvider.maybeOf(context);
     try {
-      await WidgetUpdater.update(widget.stats, brightness: _effectiveMode);
+      await WidgetUpdater.update(
+        widget.stats,
+        brightness: _effectiveMode,
+        dynamicScheme: dynamicScheme,
+      );
       await WidgetUpdater.requestPin();
     } catch (_) {
       messenger.showSnackBar(
