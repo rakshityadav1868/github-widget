@@ -50,6 +50,16 @@
                 android:resource="@xml/github_widget_info" />
         </receiver>
 
+        <!-- Refreshes the widget as soon as the wallpaper changes, without
+             needing the app to be open (see WallpaperChangeReceiver.kt) -->
+        <receiver
+            android:name=".WallpaperChangeReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.WALLPAPER_CHANGED" />
+            </intent-filter>
+        </receiver>
+
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
         <meta-data

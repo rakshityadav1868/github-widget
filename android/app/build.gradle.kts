@@ -65,6 +65,14 @@ kotlin {
     }
 }
 
+dependencies {
+    // Matches the workmanager_android plugin's own work-runtime version.
+    // Needed directly (not just transitively via the plugin) because the
+    // plugin declares it as `implementation`, which Gradle doesn't expose to
+    // consumers - WallpaperChangeReceiver enqueues WorkManager tasks itself.
+    implementation("androidx.work:work-runtime:2.10.2")
+}
+
 flutter {
     source = "../.."
 }

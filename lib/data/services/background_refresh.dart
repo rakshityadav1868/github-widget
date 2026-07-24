@@ -1,8 +1,11 @@
+import 'dart:ui';
+
 import 'package:flutter/widgets.dart';
 import 'package:workmanager/workmanager.dart';
 
 import 'github_api.dart';
 import 'token_store.dart';
+import 'wallpaper_colors.dart';
 import 'widget_updater.dart';
 
 const _taskName = 'refresh_widget';
@@ -10,6 +13,11 @@ const _taskName = 'refresh_widget';
 /// Runs in a headless background isolate the OS spins up on its own
 /// schedule - there's no running app, no UI, just this callback. Must stay a
 /// top-level function so the native side can find it by name.
+///
+/// This same task also runs on-demand right after the wallpaper changes (see
+/// WallpaperChangeReceiver.kt), not just on the periodic schedule - so it
+/// re-resolves wallpaper colors each time rather than assuming they're
+/// still what they were at the last app open.
 @pragma('vm:entry-point')
 void backgroundDispatcher() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -24,7 +32,13 @@ void backgroundDispatcher() {
     final api = GitHubApi(token: token);
     try {
       final stats = await api.fetchStats(login);
-      await WidgetUpdater.update(stats);
+      final brightness = PlatformDispatcher.instance.platformBrightness;
+      final dynamicScheme = await WallpaperColors.resolve(brightness);
+      await WidgetUpdater.update(
+        stats,
+        brightness: brightness,
+        dynamicScheme: dynamicScheme,
+      );
     } catch (_) {
       // Network hiccup, rate limit, etc. - the next scheduled run retries.
     } finally {
