@@ -1,8 +1,8 @@
-# GitHub Widget — auth backend
+# GitHub Widget - auth backend
 
 A tiny Cloudflare Worker that exchanges a GitHub OAuth `code` for an access
 token. The **client secret lives only here** (as a Worker secret), never in
-the app or the repo — that's the whole point of having a backend.
+the app or the repo - that's the whole point of having a backend.
 
 ## Deploy (free, ~5 minutes)
 
@@ -17,7 +17,7 @@ npx wrangler deploy
 ```
 
 - `wrangler login` opens the browser to authorize (one time).
-- `secret put` prompts you to paste the **client secret** — generate it in your
+- `secret put` prompts you to paste the **client secret** - generate it in your
   GitHub OAuth App (https://github.com/settings/developers → your app →
   "Generate a new client secret"). It's stored encrypted on Cloudflare only.
 - `deploy` prints a URL like `https://github-widget-auth.<you>.workers.dev`.
@@ -32,7 +32,7 @@ Set the **Authorization callback URL** to:
 githubwidget://callback
 ```
 
-(Device Flow can stay enabled or off — it's no longer used.)
+(Device Flow can stay enabled or off - it's no longer used.)
 
 ## Test it
 
