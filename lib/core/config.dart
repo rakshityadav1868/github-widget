@@ -7,7 +7,7 @@
 class AppConfig {
   const AppConfig._();
 
-  static const String githubClientId = 'YOUR_GITHUB_CLIENT_ID';
+  static const String githubClientId = 'Ov23licTpi3rjp7lUUoH';
 
   /// OAuth scopes. `read:user` covers the signed-in user's profile and their
   /// own private contribution counts in the calendar.
