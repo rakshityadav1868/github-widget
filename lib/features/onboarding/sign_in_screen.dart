@@ -99,7 +99,14 @@ class _Intro extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        const Icon(Icons.grid_view_rounded, size: 56),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(16),
+          child: Image.asset(
+            'assets/icon/icon.png',
+            width: 56,
+            height: 56,
+          ),
+        ),
         const SizedBox(height: 20),
         Text('Forge',
             style: Theme.of(context).textTheme.headlineSmall),
