@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Forge — your GitHub stats, one glance away",
+  title: "Forge - your GitHub stats, one glance away",
   description:
     "A home-screen widget for Android and iOS that shows your live GitHub contributions, streak, and merged PRs in a clean dark or light card.",
 };

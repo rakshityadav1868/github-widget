@@ -67,7 +67,7 @@ class _RootGateState extends State<RootGate> {
       MaterialPageRoute(
         builder: (_) => PreviewScreen(
           stats: sampleGitHubStats(),
-          subtitle: 'Sample data — sign in to see your own stats.',
+          subtitle: 'Sample data - sign in to see your own stats.',
         ),
       ),
     );
@@ -131,7 +131,7 @@ class _SignedInHomeState extends State<_SignedInHome> {
         if (snapshot.hasError) {
           return PreviewScreen(
             stats: sampleGitHubStats(),
-            subtitle: "Couldn't load your live stats yet — showing sample.",
+            subtitle: "Couldn't load your live stats yet - showing sample.",
             onSignOut: widget.onSignOut,
           );
         }

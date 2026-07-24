@@ -1,4 +1,4 @@
-# Forge — download website
+# Forge - download website
 
 The marketing/download page for Forge. Next.js (App Router) + Tailwind.
 
@@ -17,7 +17,7 @@ npm run build
 
 ## Deploy
 
-Free on [Vercel](https://vercel.com) — it's built for Next.js:
+Free on [Vercel](https://vercel.com) - it's built for Next.js:
 
 ```bash
 npx vercel
@@ -34,7 +34,7 @@ flutter build apk --release
 cp build/app/outputs/flutter-apk/app-release.apk website/public/downloads/forge.apk
 ```
 
-Use `--release`, not `--debug` — debug builds are much larger (150MB+) and
+Use `--release`, not `--debug` - debug builds are much larger (150MB+) and
 risk exceeding GitHub's 100MB file-size limit. The release build here is
 ~46MB.
 
@@ -44,6 +44,6 @@ risk exceeding GitHub's 100MB file-size limit. The release build here is
 
 ## iOS
 
-The iOS button is a disabled "coming soon" placeholder — real iOS
+The iOS button is a disabled "coming soon" placeholder - real iOS
 distribution needs a paid Apple Developer account (TestFlight or the App
 Store). Once that's set up, swap the placeholder for a real link.

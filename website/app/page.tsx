@@ -7,7 +7,7 @@ import Logo from "./components/Logo";
 const FEATURES = [
   {
     title: "Real GitHub data",
-    body: "Sign in with GitHub and see your actual contributions, streak, and merged PRs — not a placeholder.",
+    body: "Sign in with GitHub and see your actual contributions, streak, and merged PRs - not a placeholder.",
   },
   {
     title: "Light and dark",
@@ -71,7 +71,7 @@ export default function Home() {
               className="max-w-sm text-base leading-7 text-zinc-400"
             >
               A home-screen widget that shows your real contributions,
-              streak, and merged PRs — dark or light, always up to date.
+              streak, and merged PRs - dark or light, always up to date.
             </motion.p>
             <motion.div
               variants={{
@@ -91,7 +91,7 @@ export default function Home() {
                 Download for Android
               </motion.a>
               <span className="flex h-12 cursor-not-allowed items-center justify-center rounded-full border border-zinc-700 px-6 text-sm font-medium text-zinc-500">
-                Download for iOS — coming soon
+                Download for iOS - coming soon
               </span>
             </motion.div>
             <motion.p

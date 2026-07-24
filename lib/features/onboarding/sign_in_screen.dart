@@ -7,7 +7,7 @@ import '../../data/services/token_store.dart';
 
 /// Sign in with GitHub using the OAuth authorization-code flow: the GitHub
 /// authorize page opens in a secure browser tab, the user taps "Authorize",
-/// and they're sent straight back to the app — no codes to copy.
+/// and they're sent straight back to the app - no codes to copy.
 class SignInScreen extends StatefulWidget {
   const SignInScreen({super.key, required this.onSignedIn, this.onPreview});
 

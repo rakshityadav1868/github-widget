@@ -10,7 +10,7 @@ Map<String, dynamic> _day(String date, int count, String level) => {
 
 void main() {
   group('ContributionDay', () {
-    test('maps GraphQL level strings to 0–4', () {
+    test('maps GraphQL level strings to 0-4', () {
       expect(ContributionDay.fromJson(_day('2026-01-01', 0, 'NONE')).level, 0);
       expect(ContributionDay.fromJson(_day('2026-01-02', 1, 'FIRST_QUARTILE')).level, 1);
       expect(ContributionDay.fromJson(_day('2026-01-03', 5, 'SECOND_QUARTILE')).level, 2);
