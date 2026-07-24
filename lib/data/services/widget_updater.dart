@@ -24,7 +24,7 @@ class WidgetUpdater {
     await HomeWidget.renderFlutterWidget(
       _Renderable(stats: stats, brightness: resolved),
       key: imageKey,
-      logicalSize: const Size(360, 150),
+      logicalSize: const Size(360, 190),
     );
     await HomeWidget.updateWidget(androidName: androidProvider);
   }
