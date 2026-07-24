@@ -4,21 +4,13 @@ import 'colors.dart';
 
 /// App-wide light and dark themes.
 ///
-/// The app follows the phone's system brightness by default. On Android 12+
-/// (and Samsung devices with wallpaper-based theming), the theme is derived
-/// from the wallpaper's dynamic color so the whole app — and the widget —
-/// blends with the rest of the system UI. The widget's own colors live in
-/// [WidgetPalette]; these themes style the surrounding app.
+/// The app follows the phone's system brightness by default. The widget's
+/// own colors live in [WidgetPalette] and, when the user opts into "Theme
+/// match", in the wallpaper-derived scheme resolved by
+/// `WallpaperColors.resolve` and carried via [ThemeProvider]; these themes
+/// style the surrounding app chrome only.
 class AppTheme {
   const AppTheme._();
-
-  /// Resolves the [WidgetPalette] for the current [Brightness], using dynamic
-  /// colors when available.
-  static WidgetPalette paletteFor(Brightness brightness,
-      {ColorScheme? dynamic}) {
-    if (dynamic != null) return WidgetPalette.fromColorScheme(dynamic);
-    return WidgetPalette.of(brightness);
-  }
 
   static ThemeData light = _build(Brightness.light);
   static ThemeData dark = _build(Brightness.dark);
@@ -40,8 +32,12 @@ class AppTheme {
   }
 }
 
-/// Provides the resolved [ColorScheme] (dynamic or fallback) to the widget
-/// tree via an inherited widget.
+/// Provides the resolved wallpaper/dynamic [ColorScheme] to the widget tree,
+/// when one could actually be derived - null means no real per-wallpaper
+/// scheme is available on this device, and callers should fall back to the
+/// static palette rather than inventing a fake "dynamic" one. This is what
+/// [maybeOf] returning null vs. non-null actually means to callers like
+/// `PreviewScreen`'s "Theme match" option.
 class ThemeProvider extends InheritedWidget {
   const ThemeProvider({
     super.key,
@@ -49,7 +45,7 @@ class ThemeProvider extends InheritedWidget {
     required super.child,
   });
 
-  final ColorScheme scheme;
+  final ColorScheme? scheme;
 
   static ColorScheme? maybeOf(BuildContext context) {
     final result =
@@ -57,14 +53,6 @@ class ThemeProvider extends InheritedWidget {
     return result?.scheme;
   }
 
-  static ColorScheme of(BuildContext context) {
-    final result =
-        context.dependOnInheritedWidgetOfExactType<ThemeProvider>();
-    return result?.scheme ??
-        ColorScheme.fromSeed(seedColor: WidgetPalette.dark.accentGreen);
-  }
-
   @override
-  bool updateShouldNotify(ThemeProvider old) =>
-      old.scheme != scheme;
+  bool updateShouldNotify(ThemeProvider old) => old.scheme != scheme;
 }

@@ -1,13 +1,14 @@
-import 'package:dynamic_color/dynamic_color.dart';
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 
-import 'core/colors.dart';
 import 'core/theme.dart';
 import 'data/models/github_stats.dart';
 import 'data/sample_stats.dart';
 import 'data/services/background_refresh.dart';
 import 'data/services/github_api.dart';
 import 'data/services/token_store.dart';
+import 'data/services/wallpaper_colors.dart';
 import 'data/services/widget_updater.dart';
 import 'features/onboarding/sign_in_screen.dart';
 import 'features/preview/preview_screen.dart';
@@ -18,32 +19,45 @@ Future<void> main() async {
   runApp(const GitHubWidgetApp());
 }
 
-class GitHubWidgetApp extends StatelessWidget {
+class GitHubWidgetApp extends StatefulWidget {
   const GitHubWidgetApp({super.key});
 
   @override
+  State<GitHubWidgetApp> createState() => _GitHubWidgetAppState();
+}
+
+class _GitHubWidgetAppState extends State<GitHubWidgetApp> {
+  ColorScheme? _wallpaperScheme;
+
+  @override
+  void initState() {
+    super.initState();
+    _resolveWallpaperScheme();
+  }
+
+  /// Resolves the wallpaper-matched scheme once at startup. The widget
+  /// already re-renders periodically (background refresh) and on every app
+  /// open, so this naturally picks up a changed wallpaper over time without
+  /// needing a live "wallpaper changed" listener.
+  Future<void> _resolveWallpaperScheme() async {
+    final scheme = await WallpaperColors.resolve(
+      PlatformDispatcher.instance.platformBrightness,
+    );
+    if (mounted) setState(() => _wallpaperScheme = scheme);
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return DynamicColorBuilder(
-      builder: (ColorScheme? dynamic, ColorScheme? _) {
-        final scheme = dynamic ??
-            ColorScheme.fromSeed(
-              seedColor: WidgetPalette.dark.accentGreen,
-              brightness: ThemeMode.system == ThemeMode.dark
-                  ? Brightness.dark
-                  : Brightness.light,
-            );
-        return ThemeProvider(
-          scheme: scheme,
-          child: MaterialApp(
-            title: 'Forge',
-            debugShowCheckedModeBanner: false,
-            theme: AppTheme.light,
-            darkTheme: AppTheme.dark,
-            themeMode: ThemeMode.system,
-            home: const RootGate(),
-          ),
-        );
-      },
+    return ThemeProvider(
+      scheme: _wallpaperScheme,
+      child: MaterialApp(
+        title: 'Forge',
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.light,
+        darkTheme: AppTheme.dark,
+        themeMode: ThemeMode.system,
+        home: const RootGate(),
+      ),
     );
   }
 }
