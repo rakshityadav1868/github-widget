@@ -17,6 +17,11 @@ flutter pub get
 flutter run   # with your Android phone connected over USB (USB debugging on)
 ```
 
+## Contributing
+
+Contributions are welcome — see [CONTRIBUTING.md](CONTRIBUTING.md) for setup,
+project structure, and PR guidelines.
+
 ## License
 
 MIT - see [LICENSE](LICENSE).
