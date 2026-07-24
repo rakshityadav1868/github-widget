@@ -10,7 +10,7 @@ class GitHubStats {
     required this.totalStars,
     required this.totalContributions,
     required this.prsMerged,
-    required this.contributions,
+    required this.weeks,
   });
 
   final String login;
@@ -27,19 +27,27 @@ class GitHubStats {
   /// Number of merged pull requests authored by the user.
   final int prsMerged;
 
-  /// The contribution calendar, one entry per day, oldest first.
-  final List<ContributionDay> contributions;
+  /// The contribution calendar as weeks (oldest week first). Each week holds
+  /// its days in order (Sunday → Saturday); the first/last weeks may be
+  /// partial. This is exactly GitHub's own layout: one column per week.
+  final List<List<ContributionDay>> weeks;
+
+  /// The calendar flattened to a single day list, oldest first.
+  List<ContributionDay> get contributions => [
+        for (final week in weeks) ...week,
+      ];
 
   /// Current daily contribution streak. An empty most-recent day (today, not
   /// finished yet) does not break the streak; any earlier empty day does.
   int get currentStreak {
-    if (contributions.isEmpty) return 0;
-    final days = [...contributions]..sort((a, b) => a.date.compareTo(b.date));
+    final days = contributions;
+    if (days.isEmpty) return 0;
+    final sorted = [...days]..sort((a, b) => a.date.compareTo(b.date));
     var streak = 0;
-    for (var i = days.length - 1; i >= 0; i--) {
-      if (days[i].count > 0) {
+    for (var i = sorted.length - 1; i >= 0; i--) {
+      if (sorted[i].count > 0) {
         streak++;
-      } else if (i == days.length - 1) {
+      } else if (i == sorted.length - 1) {
         continue; // today may still be empty
       } else {
         break;
@@ -66,11 +74,13 @@ class GitHubStats {
     final totalContributions =
         (calendar['totalContributions'] as num?)?.toInt() ?? 0;
 
-    final days = <ContributionDay>[];
+    final weeks = <List<ContributionDay>>[];
     for (final week in (calendar['weeks'] as List)) {
+      final days = <ContributionDay>[];
       for (final day in ((week as Map)['contributionDays'] as List)) {
         days.add(ContributionDay.fromJson(day as Map<String, dynamic>));
       }
+      weeks.add(days);
     }
 
     final prsMerged =
@@ -84,7 +94,7 @@ class GitHubStats {
       totalStars: totalStars,
       totalContributions: totalContributions,
       prsMerged: prsMerged,
-      contributions: days,
+      weeks: weeks,
     );
   }
 }

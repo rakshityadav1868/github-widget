@@ -77,7 +77,7 @@ void main() {
           totalStars: 0,
           totalContributions: 0,
           prsMerged: 0,
-          contributions: days,
+          weeks: [days],
         );
 
     test('counts consecutive active days from the end', () {
