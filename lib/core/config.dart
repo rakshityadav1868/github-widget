@@ -20,7 +20,8 @@ class AppConfig {
 
   /// The deployed auth backend that exchanges the code for a token.
   /// Set this to your Cloudflare Worker URL (see server/README.md).
-  static const String authBackendUrl = 'YOUR_WORKER_URL';
+  static const String authBackendUrl =
+      'https://github-widget-auth.yadavrakshit60.workers.dev';
 
   static bool get isConfigured =>
       githubClientId.isNotEmpty &&
