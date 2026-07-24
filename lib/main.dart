@@ -3,13 +3,18 @@ import 'package:flutter/material.dart';
 import 'core/theme.dart';
 import 'data/models/github_stats.dart';
 import 'data/sample_stats.dart';
+import 'data/services/background_refresh.dart';
 import 'data/services/github_api.dart';
 import 'data/services/token_store.dart';
 import 'data/services/widget_updater.dart';
 import 'features/onboarding/sign_in_screen.dart';
 import 'features/preview/preview_screen.dart';
 
-void main() => runApp(const GitHubWidgetApp());
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await BackgroundRefresh.initialize();
+  runApp(const GitHubWidgetApp());
+}
 
 class GitHubWidgetApp extends StatelessWidget {
   const GitHubWidgetApp({super.key});
@@ -59,6 +64,7 @@ class _RootGateState extends State<RootGate> {
 
   Future<void> _signOut() async {
     await _store.clear();
+    await BackgroundRefresh.cancel();
     if (mounted) setState(() => _login = null);
   }
 
@@ -112,6 +118,7 @@ class _SignedInHomeState extends State<_SignedInHome> {
     try {
       final stats = await api.fetchStats(widget.login);
       await WidgetUpdater.update(stats);
+      await BackgroundRefresh.schedule();
       return stats;
     } finally {
       api.close();
