@@ -5,6 +5,7 @@ import 'data/models/github_stats.dart';
 import 'data/sample_stats.dart';
 import 'data/services/github_api.dart';
 import 'data/services/token_store.dart';
+import 'data/services/widget_updater.dart';
 import 'features/onboarding/sign_in_screen.dart';
 import 'features/preview/preview_screen.dart';
 
@@ -109,7 +110,9 @@ class _SignedInHomeState extends State<_SignedInHome> {
     if (token == null) throw StateError('No token');
     final api = GitHubApi(token: token);
     try {
-      return await api.fetchStats(widget.login);
+      final stats = await api.fetchStats(widget.login);
+      await WidgetUpdater.update(stats);
+      return stats;
     } finally {
       api.close();
     }

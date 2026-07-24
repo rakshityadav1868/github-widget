@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../data/models/github_stats.dart';
+import '../../data/services/widget_updater.dart';
 import '../../widgets/contribution_grid.dart';
 import 'widget_card.dart';
 
@@ -29,6 +30,21 @@ class _PreviewScreenState extends State<PreviewScreen> {
   void _replay() {
     _darkKey.currentState?.replay();
     _lightKey.currentState?.replay();
+  }
+
+  Future<void> _addToHome() async {
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      await WidgetUpdater.update(widget.stats);
+      await WidgetUpdater.requestPin();
+    } catch (_) {
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text(
+              'Add the widget from your home screen: long-press → Widgets → GitHub Widget.'),
+        ),
+      );
+    }
   }
 
   @override
@@ -67,6 +83,14 @@ class _PreviewScreenState extends State<PreviewScreen> {
             gridKey: _lightKey,
           ),
           const SizedBox(height: 28),
+          Center(
+            child: FilledButton.icon(
+              onPressed: _addToHome,
+              icon: const Icon(Icons.add_to_home_screen, size: 18),
+              label: const Text('Add to home screen'),
+            ),
+          ),
+          const SizedBox(height: 12),
           Center(
             child: OutlinedButton.icon(
               onPressed: _replay,
