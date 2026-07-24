@@ -11,6 +11,6 @@ void main() {
     );
 
     expect(find.text('Sign in with GitHub'), findsOneWidget);
-    expect(find.text('GitHub Widget'), findsOneWidget);
+    expect(find.text('Forge'), findsOneWidget);
   });
 }

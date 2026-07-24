@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// Colors for the GitHub Widget, matching the reference design.
+/// Colors for Forge, matching the reference design.
 ///
 /// Two palettes — [dark] and [light] — each describing the widget card
 /// background, the contribution-grid empty cell, the five green intensity
