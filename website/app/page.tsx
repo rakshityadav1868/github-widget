@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import PhoneMockup from "./components/PhoneMockup";
+import Logo from "./components/Logo";
 
 const FEATURES = [
   {
@@ -31,16 +32,7 @@ export default function Home() {
         transition={{ duration: 0.5 }}
         className="flex w-full max-w-5xl items-center justify-between px-6 py-6"
       >
-        <div className="flex items-center gap-2">
-          <motion.span
-            className="inline-block h-3 w-3 rounded-full bg-[#3fb950]"
-            animate={{ opacity: [1, 0.4, 1] }}
-            transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
-          />
-          <span className="text-sm font-medium tracking-wide text-zinc-200">
-            Forge
-          </span>
-        </div>
+        <Logo className="h-9 w-9" />
         <a
           href="https://github.com/rakshityadav1868/github-widget"
           className="text-sm text-zinc-400 hover:text-zinc-200"
