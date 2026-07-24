@@ -15,14 +15,23 @@ class WidgetUpdater {
       'com.rakshityadav.github_widget.GithubWidgetProvider';
 
   /// Renders the widget for the given [stats] and refreshes the home screen.
+  ///
+  /// When [brightness] is provided along with a [dynamicScheme], the widget
+  /// picks up the wallpaper-derived dynamic colors so it matches the system
+  /// theme (Android 12+ / Samsung).
   static Future<void> update(
     GitHubStats stats, {
     Brightness? brightness,
+    ColorScheme? dynamicScheme,
   }) async {
     final resolved =
         brightness ?? PlatformDispatcher.instance.platformBrightness;
     await HomeWidget.renderFlutterWidget(
-      _Renderable(stats: stats, brightness: resolved),
+      _Renderable(
+        stats: stats,
+        brightness: resolved,
+        dynamicScheme: dynamicScheme,
+      ),
       key: imageKey,
       logicalSize: const Size(360, 190),
     );
@@ -39,9 +48,14 @@ class WidgetUpdater {
 }
 
 class _Renderable extends StatelessWidget {
-  const _Renderable({required this.stats, required this.brightness});
+  const _Renderable({
+    required this.stats,
+    required this.brightness,
+    this.dynamicScheme,
+  });
   final GitHubStats stats;
   final Brightness brightness;
+  final ColorScheme? dynamicScheme;
 
   @override
   Widget build(BuildContext context) {
@@ -49,7 +63,12 @@ class _Renderable extends StatelessWidget {
       data: const MediaQueryData(),
       child: Directionality(
         textDirection: TextDirection.ltr,
-        child: WidgetCard(stats: stats, brightness: brightness, animate: false),
+        child: WidgetCard(
+          stats: stats,
+          brightness: brightness,
+          dynamicScheme: dynamicScheme,
+          animate: false,
+        ),
       ),
     );
   }
