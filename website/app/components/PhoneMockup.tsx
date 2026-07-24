@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import Logo from "./Logo";
 
 const GRID_LEVELS = [
   1, 0, 2, 3, 1, 0, 4, 2, 1, 3, 2, 1, 0, 2, 4, 1, 0, 3, 2, 1, 0, 2, 1, 3, 4, 2,
@@ -44,6 +45,9 @@ function WidgetCard() {
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ duration: 0.5, delay: 0.2, ease: "easeOut" }}
     >
+      <div className="mb-3 flex items-center gap-2">
+        <Logo className="h-5 w-5" />
+      </div>
       <div className="flex items-center gap-4">
         <div className="flex-shrink-0">
           <p className="text-3xl font-bold leading-none text-white">23</p>
