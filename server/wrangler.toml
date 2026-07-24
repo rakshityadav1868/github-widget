@@ -1,0 +1,8 @@
+name = "github-widget-auth"
+main = "src/index.js"
+compatibility_date = "2024-05-01"
+
+# Public — safe to commit. The client SECRET is set separately as a Worker
+# secret (never in this file):  npx wrangler secret put GITHUB_CLIENT_SECRET
+[vars]
+GITHUB_CLIENT_ID = "Ov23licTpi3rjp7lUUoH"

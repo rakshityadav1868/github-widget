@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/config.dart';
 import '../../data/services/github_api.dart';
-import '../../data/services/github_auth.dart';
+import '../../data/services/github_oauth.dart';
 import '../../data/services/token_store.dart';
 
-/// Sign in with GitHub using the OAuth device flow.
+/// Sign in with GitHub using the OAuth authorization-code flow: the GitHub
+/// authorize page opens in a secure browser tab, the user taps "Authorize",
+/// and they're sent straight back to the app — no codes to copy.
 class SignInScreen extends StatefulWidget {
   const SignInScreen({super.key, required this.onSignedIn, this.onPreview});
 
@@ -21,22 +21,18 @@ class SignInScreen extends StatefulWidget {
   State<SignInScreen> createState() => _SignInScreenState();
 }
 
-enum _Stage { idle, requesting, awaitingUser, verifying, error }
+enum _Stage { idle, signing, error }
 
 class _SignInScreenState extends State<SignInScreen> {
-  final _auth = GitHubAuth(
-    clientId: AppConfig.githubClientId,
-    scopes: AppConfig.githubScopes,
-  );
+  final _oauth = GitHubOAuth();
   final _store = TokenStore();
 
   _Stage _stage = _Stage.idle;
-  DeviceCodeResponse? _code;
   String? _error;
 
   @override
   void dispose() {
-    _auth.close();
+    _oauth.close();
     super.dispose();
   }
 
@@ -44,32 +40,26 @@ class _SignInScreenState extends State<SignInScreen> {
     if (!AppConfig.isConfigured) {
       setState(() {
         _stage = _Stage.error;
-        _error = 'GitHub sign-in isn\'t set up yet. Add the OAuth Client ID in '
-            'lib/core/config.dart.';
+        _error = 'Sign-in isn\'t set up yet. Deploy the auth backend and set '
+            'authBackendUrl in lib/core/config.dart (see server/README.md).';
       });
       return;
     }
     setState(() {
-      _stage = _Stage.requesting;
+      _stage = _Stage.signing;
       _error = null;
     });
     try {
-      final code = await _auth.requestDeviceCode();
-      setState(() {
-        _code = code;
-        _stage = _Stage.awaitingUser;
-      });
-      final token = await _auth.pollForToken(code);
-      setState(() => _stage = _Stage.verifying);
+      final token = await _oauth.signIn();
       final api = GitHubApi(token: token);
       final login = await api.fetchViewerLogin();
       api.close();
       await _store.save(token: token, login: login);
       if (mounted) widget.onSignedIn(login);
     } catch (e) {
-      final message = e is GitHubAuthException || e is GitHubApiException
+      final message = e is GitHubOAuthException || e is GitHubApiException
           ? e.toString().split(': ').skip(1).join(': ')
-          : 'Something went wrong. Please try again.';
+          : 'Sign-in was cancelled or failed. Please try again.';
       setState(() {
         _stage = _Stage.error;
         _error = message;
@@ -84,28 +74,17 @@ class _SignInScreenState extends State<SignInScreen> {
         child: Center(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 32),
-            child: _buildBody(context),
+            child: _stage == _Stage.signing
+                ? const _Loading()
+                : _Intro(
+                    error: _error,
+                    onPressed: _start,
+                    onPreview: widget.onPreview,
+                  ),
           ),
         ),
       ),
     );
-  }
-
-  Widget _buildBody(BuildContext context) {
-    switch (_stage) {
-      case _Stage.awaitingUser:
-        return _CodeStep(code: _code!);
-      case _Stage.requesting:
-      case _Stage.verifying:
-        return const _Loading();
-      case _Stage.idle:
-      case _Stage.error:
-        return _Intro(
-          error: _error,
-          onPressed: _start,
-          onPreview: widget.onPreview,
-        );
-    }
   }
 }
 
@@ -156,52 +135,8 @@ class _Intro extends StatelessWidget {
   }
 }
 
-class _CodeStep extends StatelessWidget {
-  const _CodeStep({required this.code});
-  final DeviceCodeResponse code;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text('Enter this code on GitHub',
-            style: Theme.of(context).textTheme.titleMedium),
-        const SizedBox(height: 20),
-        SelectableText(
-          code.userCode,
-          style: const TextStyle(
-            fontSize: 34,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 6,
-            fontFeatures: [FontFeature.tabularFigures()],
-          ),
-        ),
-        const SizedBox(height: 8),
-        TextButton.icon(
-          onPressed: () => Clipboard.setData(ClipboardData(text: code.userCode)),
-          icon: const Icon(Icons.copy, size: 18),
-          label: const Text('Copy code'),
-        ),
-        const SizedBox(height: 20),
-        FilledButton.icon(
-          onPressed: () => launchUrl(
-            Uri.parse(code.verificationUri),
-            mode: LaunchMode.externalApplication,
-          ),
-          icon: const Icon(Icons.open_in_new, size: 18),
-          label: const Text('Open GitHub'),
-        ),
-        const SizedBox(height: 28),
-        const _Loading(label: 'Waiting for you to authorize…'),
-      ],
-    );
-  }
-}
-
 class _Loading extends StatelessWidget {
-  const _Loading({this.label});
-  final String? label;
+  const _Loading();
 
   @override
   Widget build(BuildContext context) {
@@ -213,10 +148,9 @@ class _Loading extends StatelessWidget {
           height: 26,
           child: CircularProgressIndicator(strokeWidth: 2.5),
         ),
-        if (label != null) ...[
-          const SizedBox(height: 16),
-          Text(label!, style: Theme.of(context).textTheme.bodyMedium),
-        ],
+        const SizedBox(height: 16),
+        Text('Waiting for GitHub…',
+            style: Theme.of(context).textTheme.bodyMedium),
       ],
     );
   }
