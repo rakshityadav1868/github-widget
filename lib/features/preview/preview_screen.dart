@@ -42,7 +42,7 @@ class _PreviewScreenState extends State<PreviewScreen> {
       messenger.showSnackBar(
         const SnackBar(
           content: Text(
-              'Add the widget from your home screen: long-press → Widgets → GitHub Widget.'),
+              'Add the widget from your home screen: long-press → Widgets → Forge.'),
         ),
       );
     }

@@ -1,4 +1,4 @@
-# GitHub Widget
+# Forge
 
 A real home-screen widget app for **Android and iOS** that shows your live GitHub
 stats — contribution grid, day streak, PRs merged, followers, stars — in a clean

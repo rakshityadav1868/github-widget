@@ -101,7 +101,7 @@ class _Intro extends StatelessWidget {
       children: [
         const Icon(Icons.grid_view_rounded, size: 56),
         const SizedBox(height: 20),
-        Text('GitHub Widget',
+        Text('Forge',
             style: Theme.of(context).textTheme.headlineSmall),
         const SizedBox(height: 8),
         Text(
