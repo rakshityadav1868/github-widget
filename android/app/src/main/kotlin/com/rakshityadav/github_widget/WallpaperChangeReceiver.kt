@@ -20,9 +20,17 @@ import dev.fluttercommunity.workmanager.BackgroundWorker
 /// callback to run via a single input-data key (DART_TASK_KEY), so enqueuing
 /// a OneTimeWorkRequest with that key set to the same task name used by the
 /// periodic registration runs the exact same Dart code.
+///
+/// The new wallpaper color is read *here*, before the work is enqueued,
+/// rather than by the Dart task itself. The task runs in a headless engine
+/// that cannot reach MainActivity's wallpaper method channel, so it has no
+/// way to see the new color; this receiver has a real Context and does.
 class WallpaperChangeReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action != Intent.ACTION_WALLPAPER_CHANGED) return
+
+        // Must happen before enqueuing: the work reads these values back.
+        RenderPrefs.capture(context)
 
         val input = Data.Builder()
             .putString(BackgroundWorker.DART_TASK_KEY, "refresh_widget")

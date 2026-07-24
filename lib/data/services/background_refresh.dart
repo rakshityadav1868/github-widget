@@ -1,11 +1,9 @@
-import 'dart:ui';
-
 import 'package:flutter/widgets.dart';
 import 'package:workmanager/workmanager.dart';
 
 import 'github_api.dart';
 import 'token_store.dart';
-import 'wallpaper_colors.dart';
+import 'widget_render_prefs.dart';
 import 'widget_updater.dart';
 
 const _taskName = 'refresh_widget';
@@ -15,9 +13,15 @@ const _taskName = 'refresh_widget';
 /// top-level function so the native side can find it by name.
 ///
 /// This same task also runs on-demand right after the wallpaper changes (see
-/// WallpaperChangeReceiver.kt), not just on the periodic schedule - so it
-/// re-resolves wallpaper colors each time rather than assuming they're
-/// still what they were at the last app open.
+/// WallpaperChangeReceiver.kt), not just on the periodic schedule.
+///
+/// Deliberately, this task does not resolve *any* theme itself. It has no
+/// Activity, no view and no surface, so asking the platform for the
+/// wallpaper color, the light/dark setting or the screen density all fail -
+/// silently, and with plausible-looking wrong answers rather than errors.
+/// Doing so repainted the widget white, purple and blurry every 15 minutes.
+/// It now only refreshes the *numbers*, and replays the appearance captured
+/// by [WidgetRenderPrefs] while the app was last in the foreground.
 @pragma('vm:entry-point')
 void backgroundDispatcher() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -29,18 +33,29 @@ void backgroundDispatcher() {
     final login = await store.readLogin();
     if (token == null || login == null) return true;
 
+    // Load these before spending a network call: with no captured
+    // appearance there is nothing faithful to render, and repainting the
+    // widget from defaults is precisely the bug this guards against.
+    final prefs = await WidgetRenderPrefs.load();
+    if (prefs == null) {
+      debugPrint('Forge: no captured render prefs; leaving the widget as-is.');
+      return true;
+    }
+
     final api = GitHubApi(token: token);
     try {
       final stats = await api.fetchStats(login);
-      final brightness = PlatformDispatcher.instance.platformBrightness;
-      final dynamicScheme = await WallpaperColors.resolve(brightness);
       await WidgetUpdater.update(
         stats,
-        brightness: brightness,
-        dynamicScheme: dynamicScheme,
+        brightness: prefs.brightness,
+        dynamicScheme: prefs.scheme,
+        pixelRatio: prefs.pixelRatio,
       );
-    } catch (_) {
+    } catch (error, stack) {
       // Network hiccup, rate limit, etc. - the next scheduled run retries.
+      // Logged rather than swallowed: silent catches here are why the widget
+      // regressed for three releases without anyone noticing.
+      debugPrint('Forge: background refresh failed: $error\n$stack');
     } finally {
       api.close();
     }

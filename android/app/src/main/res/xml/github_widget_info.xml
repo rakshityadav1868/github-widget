@@ -1,10 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- updatePeriodMillis is 0 on purpose: the widget image is pushed by the
+     app and by the background refresh, which broadcast APPWIDGET_UPDATE
+     themselves. A system-driven period would only re-decode the same file,
+     and could catch it mid-write and fall back to the placeholder art. -->
 <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
     android:minWidth="250dp"
     android:minHeight="110dp"
     android:targetCellWidth="4"
     android:targetCellHeight="2"
-    android:updatePeriodMillis="1800000"
+    android:updatePeriodMillis="0"
     android:initialLayout="@layout/github_widget"
     android:previewLayout="@layout/github_widget"
     android:previewImage="@drawable/widget_preview"

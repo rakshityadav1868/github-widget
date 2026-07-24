@@ -1,7 +1,5 @@
 package com.rakshityadav.github_widget
 
-import android.app.WallpaperManager
-import android.os.Build
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
@@ -13,6 +11,11 @@ import io.flutter.plugin.common.MethodChannel
 /// (WallpaperManager.getDrawable()), this requires no storage permission at
 /// all, since it returns pre-computed representative colors rather than the
 /// raw image.
+///
+/// Note that this channel is registered on *this Activity's* engine, so it
+/// only answers while the app is in the foreground. The background refresh
+/// isolate has its own engine and cannot reach it - which is why the render
+/// parameters are also snapshotted to disk by [RenderPrefs] on every resume.
 class MainActivity : FlutterActivity() {
     private val channelName = "forge/wallpaper"
 
@@ -21,27 +24,19 @@ class MainActivity : FlutterActivity() {
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, channelName)
             .setMethodCallHandler { call, result ->
                 if (call.method == "getWallpaperColor") {
-                    result.success(readWallpaperColor())
+                    result.success(RenderPrefs.wallpaperArgb(this))
                 } else {
                     result.notImplemented()
                 }
             }
     }
 
-    /// Returns the wallpaper's primary color as an ARGB int, or null if
-    /// unavailable (pre-API 27, or a live wallpaper that doesn't publish
-    /// colors). getWallpaperColors() is API 27+, so this must not even be
-    /// called on older devices - not just wrapped in try/catch, since a
-    /// missing method is a NoSuchMethodError (not an Exception) and would
-    /// crash rather than being caught.
-    private fun readWallpaperColor(): Int? {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O_MR1) return null
-        return try {
-            val manager = WallpaperManager.getInstance(applicationContext)
-            val colors = manager.getWallpaperColors(WallpaperManager.FLAG_SYSTEM)
-            colors?.primaryColor?.toArgb()
-        } catch (e: Throwable) {
-            null
-        }
+    /// Snapshots the wallpaper color, night-mode setting and screen density
+    /// for the background refresh to reuse. On resume rather than on create,
+    /// so that a wallpaper or dark-mode change made while Forge sat in the
+    /// background is picked up when the user comes back.
+    override fun onResume() {
+        super.onResume()
+        RenderPrefs.capture(this)
     }
 }
