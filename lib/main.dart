@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 
 import 'core/theme.dart';
+import 'data/models/github_stats.dart';
+import 'data/sample_stats.dart';
+import 'data/services/github_api.dart';
 import 'data/services/token_store.dart';
 import 'features/onboarding/sign_in_screen.dart';
+import 'features/preview/preview_screen.dart';
 
 void main() => runApp(const GitHubWidgetApp());
 
@@ -23,7 +27,7 @@ class GitHubWidgetApp extends StatelessWidget {
 }
 
 /// Decides the first screen: sign-in when there's no stored token, otherwise
-/// the signed-in landing (replaced by the widget preview in PR #4).
+/// the live widget preview.
 class RootGate extends StatefulWidget {
   const RootGate({super.key});
 
@@ -57,6 +61,17 @@ class _RootGateState extends State<RootGate> {
     if (mounted) setState(() => _login = null);
   }
 
+  void _previewSample() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => PreviewScreen(
+          stats: sampleGitHubStats(),
+          subtitle: 'Sample data — sign in to see your own stats.',
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_loading) {
@@ -67,39 +82,62 @@ class _RootGateState extends State<RootGate> {
     if (_login == null) {
       return SignInScreen(
         onSignedIn: (login) => setState(() => _login = login),
+        onPreview: _previewSample,
       );
     }
-    return _SignedInScreen(login: _login!, onSignOut: _signOut);
+    return _SignedInHome(login: _login!, onSignOut: _signOut);
   }
 }
 
-/// Temporary landing after sign-in. PR #4 replaces this with the animated
-/// widget preview.
-class _SignedInScreen extends StatelessWidget {
-  const _SignedInScreen({required this.login, required this.onSignOut});
+/// Loads the signed-in user's real stats and shows the preview. Falls back to
+/// sample data if the live fetch fails (e.g. no network yet).
+class _SignedInHome extends StatefulWidget {
+  const _SignedInHome({required this.login, required this.onSignOut});
   final String login;
   final VoidCallback onSignOut;
 
   @override
+  State<_SignedInHome> createState() => _SignedInHomeState();
+}
+
+class _SignedInHomeState extends State<_SignedInHome> {
+  final _store = TokenStore();
+  late final Future<GitHubStats> _future = _load();
+
+  Future<GitHubStats> _load() async {
+    final token = await _store.readToken();
+    if (token == null) throw StateError('No token');
+    final api = GitHubApi(token: token);
+    try {
+      return await api.fetchStats(widget.login);
+    } finally {
+      api.close();
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('GitHub Widget')),
-      body: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.check_circle_outline, size: 48),
-            const SizedBox(height: 16),
-            Text('Signed in as @$login',
-                style: Theme.of(context).textTheme.titleMedium),
-            const SizedBox(height: 8),
-            Text('Widget preview coming next',
-                style: Theme.of(context).textTheme.bodyMedium),
-            const SizedBox(height: 24),
-            TextButton(onPressed: onSignOut, child: const Text('Sign out')),
-          ],
-        ),
-      ),
+    return FutureBuilder<GitHubStats>(
+      future: _future,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator(strokeWidth: 2.5)),
+          );
+        }
+        if (snapshot.hasError) {
+          return PreviewScreen(
+            stats: sampleGitHubStats(),
+            subtitle: "Couldn't load your live stats yet — showing sample.",
+            onSignOut: widget.onSignOut,
+          );
+        }
+        return PreviewScreen(
+          stats: snapshot.data!,
+          subtitle: 'Signed in as @${widget.login}',
+          onSignOut: widget.onSignOut,
+        );
+      },
     );
   }
 }
