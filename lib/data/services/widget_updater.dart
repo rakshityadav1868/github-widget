@@ -14,15 +14,27 @@ class WidgetUpdater {
   static const qualifiedAndroidProvider =
       'com.rakshityadav.github_widget.GithubWidgetProvider';
 
+  /// The widget's design size. Rendered at [pixelRatio] to get the actual
+  /// bitmap, so a 3x phone yields 1080x570.
+  static const logicalSize = Size(360, 190);
+
   /// Renders the widget for the given [stats] and refreshes the home screen.
   ///
   /// When [brightness] is provided along with a [dynamicScheme], the widget
   /// picks up the wallpaper-derived dynamic colors so it matches the system
   /// theme (Android 12+ / Samsung).
+  ///
+  /// [pixelRatio] must be supplied by any caller that isn't running in the
+  /// foreground. Left unset, `renderFlutterWidget` reads it from the
+  /// implicit view, which reports 1.0 in a headless isolate - producing a
+  /// 360x190 image that the launcher then upscales into a blur. Callers with
+  /// no view of their own read the real density from
+  /// [WidgetRenderPrefs.pixelRatio].
   static Future<void> update(
     GitHubStats stats, {
     Brightness? brightness,
     ColorScheme? dynamicScheme,
+    double? pixelRatio,
   }) async {
     final resolved =
         brightness ?? PlatformDispatcher.instance.platformBrightness;
@@ -33,7 +45,8 @@ class WidgetUpdater {
         dynamicScheme: dynamicScheme,
       ),
       key: imageKey,
-      logicalSize: const Size(360, 190),
+      logicalSize: logicalSize,
+      pixelRatio: pixelRatio,
     );
     await HomeWidget.updateWidget(androidName: androidProvider);
   }

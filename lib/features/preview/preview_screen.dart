@@ -2,19 +2,19 @@ import 'package:flutter/material.dart';
 
 import '../../core/theme.dart';
 import '../../data/models/github_stats.dart';
+import '../../data/services/widget_render_prefs.dart';
 import '../../data/services/widget_updater.dart';
 import '../../widgets/contribution_grid.dart';
 import 'widget_card.dart';
-
-/// Which palette the widget uses: a manually forced Light or Dark look, or
-/// [matchWallpaper] to follow the system's dynamic color (Android 12+ /
-/// Samsung theming).
-enum _ThemeChoice { light, dark, matchWallpaper }
 
 /// Shows the widget with a Light/Dark/Match-wallpaper toggle. The selected
 /// mode drives both the preview and what gets pushed to the home-screen
 /// widget - picking Light or Dark always forces that static palette, even on
 /// devices that support wallpaper-matched dynamic color.
+///
+/// The choice is persisted via [WidgetRenderPrefs] so the background refresh
+/// keeps honoring it; without that it would re-render on its own default
+/// every 15 minutes and quietly undo the user's pick.
 class PreviewScreen extends StatefulWidget {
   const PreviewScreen({
     super.key,
@@ -33,28 +33,28 @@ class PreviewScreen extends StatefulWidget {
 
 class _PreviewScreenState extends State<PreviewScreen> {
   final _gridKey = GlobalKey<ContributionGridState>();
-  _ThemeChoice? _choice;
+  WidgetThemeMode? _choice;
 
   bool _hasDynamicColor(BuildContext context) =>
       ThemeProvider.maybeOf(context) != null;
 
   /// The selected choice, defaulting to wallpaper matching when it's
   /// available, otherwise the phone's current system brightness.
-  _ThemeChoice _effectiveChoice(BuildContext context) {
+  WidgetThemeMode _effectiveChoice(BuildContext context) {
     if (_choice != null) return _choice!;
-    if (_hasDynamicColor(context)) return _ThemeChoice.matchWallpaper;
+    if (_hasDynamicColor(context)) return WidgetThemeMode.matchWallpaper;
     return MediaQuery.platformBrightnessOf(context) == Brightness.dark
-        ? _ThemeChoice.dark
-        : _ThemeChoice.light;
+        ? WidgetThemeMode.dark
+        : WidgetThemeMode.light;
   }
 
-  Brightness _brightnessFor(BuildContext context, _ThemeChoice choice) {
+  Brightness _brightnessFor(BuildContext context, WidgetThemeMode choice) {
     switch (choice) {
-      case _ThemeChoice.dark:
+      case WidgetThemeMode.dark:
         return Brightness.dark;
-      case _ThemeChoice.light:
+      case WidgetThemeMode.light:
         return Brightness.light;
-      case _ThemeChoice.matchWallpaper:
+      case WidgetThemeMode.matchWallpaper:
         return ThemeProvider.maybeOf(context)?.brightness ??
             MediaQuery.platformBrightnessOf(context);
     }
@@ -62,8 +62,8 @@ class _PreviewScreenState extends State<PreviewScreen> {
 
   /// Only non-null when the user explicitly chose wallpaper matching - a
   /// manually picked Light/Dark always wins over the system dynamic scheme.
-  ColorScheme? _dynamicSchemeFor(BuildContext context, _ThemeChoice choice) {
-    if (choice != _ThemeChoice.matchWallpaper) return null;
+  ColorScheme? _dynamicSchemeFor(BuildContext context, WidgetThemeMode choice) {
+    if (choice != WidgetThemeMode.matchWallpaper) return null;
     return ThemeProvider.maybeOf(context);
   }
 
@@ -72,13 +72,22 @@ class _PreviewScreenState extends State<PreviewScreen> {
   Future<void> _addToHome() async {
     final messenger = ScaffoldMessenger.of(context);
     final choice = _effectiveChoice(context);
-    final brightness = _brightnessFor(context, choice);
-    final dynamicScheme = _dynamicSchemeFor(context, choice);
+    // Read off the context before any await, for use if nothing was captured.
+    final fallbackBrightness = _brightnessFor(context, choice);
+    final fallbackScheme = _dynamicSchemeFor(context, choice);
     try {
+      // Persist the choice, then render from exactly what was persisted -
+      // the same path the background refresh takes. Rendering from local
+      // state instead would let the widget the user pins and the widget
+      // they get 15 minutes later drift apart, which is the whole class of
+      // bug this is guarding against.
+      await WidgetRenderPrefs.saveMode(choice);
+      final prefs = await WidgetRenderPrefs.load();
       await WidgetUpdater.update(
         widget.stats,
-        brightness: brightness,
-        dynamicScheme: dynamicScheme,
+        brightness: prefs?.brightness ?? fallbackBrightness,
+        dynamicScheme: prefs?.scheme ?? fallbackScheme,
+        pixelRatio: prefs?.pixelRatio,
       );
       await WidgetUpdater.requestPin();
     } catch (_) {
@@ -118,21 +127,21 @@ class _PreviewScreenState extends State<PreviewScreen> {
             const SizedBox(height: 16),
           ],
           Center(
-            child: SegmentedButton<_ThemeChoice>(
+            child: SegmentedButton<WidgetThemeMode>(
               segments: [
                 const ButtonSegment(
-                  value: _ThemeChoice.light,
+                  value: WidgetThemeMode.light,
                   label: Text('Light'),
                   icon: Icon(Icons.light_mode_outlined),
                 ),
                 const ButtonSegment(
-                  value: _ThemeChoice.dark,
+                  value: WidgetThemeMode.dark,
                   label: Text('Dark'),
                   icon: Icon(Icons.dark_mode_outlined),
                 ),
                 if (hasDynamicColor)
                   const ButtonSegment(
-                    value: _ThemeChoice.matchWallpaper,
+                    value: WidgetThemeMode.matchWallpaper,
                     label: Text('Theme match'),
                     icon: Icon(Icons.wallpaper_outlined),
                   ),
@@ -170,13 +179,13 @@ class _PreviewScreenState extends State<PreviewScreen> {
     );
   }
 
-  String _labelFor(_ThemeChoice choice) {
+  String _labelFor(WidgetThemeMode choice) {
     switch (choice) {
-      case _ThemeChoice.dark:
+      case WidgetThemeMode.dark:
         return 'dark';
-      case _ThemeChoice.light:
+      case WidgetThemeMode.light:
         return 'light';
-      case _ThemeChoice.matchWallpaper:
+      case WidgetThemeMode.matchWallpaper:
         return 'theme-matched';
     }
   }

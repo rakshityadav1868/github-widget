@@ -9,6 +9,7 @@ import 'data/services/background_refresh.dart';
 import 'data/services/github_api.dart';
 import 'data/services/token_store.dart';
 import 'data/services/wallpaper_colors.dart';
+import 'data/services/widget_render_prefs.dart';
 import 'data/services/widget_updater.dart';
 import 'features/onboarding/sign_in_screen.dart';
 import 'features/preview/preview_screen.dart';
@@ -155,9 +156,22 @@ class _SignedInHomeState extends State<_SignedInHome> {
     }
   }
 
+  /// Pushes freshly loaded stats to the home-screen widget using the same
+  /// captured parameters the background refresh replays, so opening the app
+  /// and a background refresh produce an identical widget rather than two
+  /// slightly different ones.
+  Future<void> _pushToWidget(GitHubStats stats) async {
+    final prefs = await WidgetRenderPrefs.load();
+    await WidgetUpdater.update(
+      stats,
+      brightness: prefs?.brightness,
+      dynamicScheme: prefs?.scheme,
+      pixelRatio: prefs?.pixelRatio,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final dynamicScheme = ThemeProvider.maybeOf(context);
     return FutureBuilder<GitHubStats>(
       future: _future,
       builder: (context, snapshot) {
@@ -173,16 +187,13 @@ class _SignedInHomeState extends State<_SignedInHome> {
             onSignOut: widget.onSignOut,
           );
         }
-        // Push the freshly loaded stats (with dynamic colors) to the widget
-        // once, after the first successful load.
+        // Push the freshly loaded stats to the widget once, after the first
+        // successful load.
         if (!_pushedToWidget) {
           _pushedToWidget = true;
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            WidgetUpdater.update(
-              snapshot.data!,
-              dynamicScheme: dynamicScheme,
-            );
-          });
+          WidgetsBinding.instance.addPostFrameCallback(
+            (_) => _pushToWidget(snapshot.data!),
+          );
         }
         return PreviewScreen(
           stats: snapshot.data!,
