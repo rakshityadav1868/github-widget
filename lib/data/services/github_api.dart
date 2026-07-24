@@ -57,6 +57,27 @@ class GitHubApi {
     return GitHubStats.fromGraphQL(data);
   }
 
+  /// Returns the login (username) of the token's owner.
+  Future<String> fetchViewerLogin() async {
+    final response = await _client.post(
+      Uri.parse(_endpoint),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({'query': 'query { viewer { login } }'}),
+    );
+    if (response.statusCode != 200) {
+      throw GitHubApiException('HTTP ${response.statusCode}: ${response.body}');
+    }
+    final body = jsonDecode(response.body) as Map<String, dynamic>;
+    final login = ((body['data'] as Map?)?['viewer'] as Map?)?['login'];
+    if (login is! String) {
+      throw GitHubApiException('Could not read the signed-in user.');
+    }
+    return login;
+  }
+
   void close() => _client.close();
 }
 
